@@ -1,0 +1,19 @@
+{
+  "name": "hardhat-project",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.6",
+    "@nomiclabs/hardhat-waffle": "^2.0.3",
+    "@types/node": "^17.0.35",
+    "chai": "^4.3.6",
+    "ethereum-waffle": "^3.4.4",
+    "ethers": "^5.6.6",
+    "hardhat": "^2.9.5"
+  },
+  "dependencies": {
+    "@aave/protocol-v2": "^1.0.1",
+    "@indexed-finance/multicall": "^2.0.0",
+    "@promises/timer": "^0.5.0",
+    "@uniswap/v2-sdk": "^3.0.1",
+    "hardhat-tracer": "*"
+  }
+}

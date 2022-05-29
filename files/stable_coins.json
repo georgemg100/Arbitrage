@@ -1,0 +1,33 @@
+[
+    
+    {
+        "address": "0x853d955acef822db058eb8505911ed77f175b99e",
+        "symbol": "FRAX",
+        "decimal": 18
+    },
+    {
+        "address": "0x8e870d67f660d95d5be530380d0ec0bd388289e1",
+        "symbol": "PAX",
+        "decimal": 18
+    },
+    {
+        "address": "0x0000000000085d4780b73119b644ae5ecd22b376",
+        "symbol": "TUSD",
+        "decimal": 18
+    },
+    {
+        "address": "0x57ab1ec28d129707052df4df418d58a2d46d5f51",
+        "symbol": "sUSD",
+        "decimal": 18
+    },
+    {
+        "address": "0x4fabb145d64652a948d72533023f6e7a623c7c53",
+        "symbol": "BUSD",
+        "decimal": 18
+    },
+    {
+        "address": "0x6b175474e89094c44da98b954eedeac495271d0f",
+        "symbol": "DAI",
+        "decimal": 18
+    }
+    ]
