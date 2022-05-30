@@ -4,6 +4,7 @@ import "hardhat/console.sol";
 import "./IUniswapV2Factory.sol";
 import "./IUniswapV2Pair.sol";
 import "./IERC20.sol";
+import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 
 contract Pairs {
 
@@ -18,6 +19,7 @@ contract Pairs {
         uint112 _reserve0;
         uint112 _reserve1;
         address _poolAddress;
+        uint112 _fee;
     }
 
     function getPairDataUniswap(address[] memory pairAddresses) view public returns(PairData[] memory) {
@@ -45,7 +47,7 @@ contract Pairs {
             console.log("token0_decimal: %s", token0_decimal);
             console.log("token1_decimal: %s", token1_decimal);
             console.log("");*/
-            PairData memory pairData = PairData(token0, token1, token0_decimal, token1_decimal, token0_symbol, token1_symbol, reserve0, reserve1, pairAddresses[i]);
+            PairData memory pairData = PairData(token0, token1, token0_decimal, token1_decimal, token0_symbol, token1_symbol, reserve0, reserve1, pairAddresses[i], 3000);
             //PairData2 memory pairData2 = PairData2(token0, token1, reserve0, reserve1, pairAddresses[i]);
 
             //PairData memory pairData = PairData(address(this), address(this), 4, 4, "usdc", "usdc", 10, 10, address(this));
@@ -80,7 +82,7 @@ contract Pairs {
             console.log("token0_decimal: %s", token0_decimal);
             console.log("token1_decimal: %s", token1_decimal);
             console.log("");*/
-            PairData memory pairData = PairData(token0, token1, token0_decimal, token1_decimal, token0_symbol, token1_symbol, reserve0, reserve1, pairAddresses[i]);
+            PairData memory pairData = PairData(token0, token1, token0_decimal, token1_decimal, token0_symbol, token1_symbol, reserve0, reserve1, pairAddresses[i], 3000);
             //PairData2 memory pairData2 = PairData2(token0, token1, reserve0, reserve1, pairAddresses[i]);
 
             //PairData memory pairData = PairData(address(this), address(this), 4, 4, "usdc", "usdc", 10, 10, address(this));
@@ -115,12 +117,39 @@ contract Pairs {
         console.log("token0_decimal: %s", token0_decimal);
         console.log("token1_decimal: %s", token1_decimal);
         console.log("");*/
-        PairData memory pairData = PairData(token0, token1, token0_decimal, token1_decimal, token0_symbol, token1_symbol, reserve0, reserve1, pairAddress);
+        PairData memory pairData = PairData(token0, token1, token0_decimal, token1_decimal, token0_symbol, token1_symbol, reserve0, reserve1, pairAddress, 3000);
         //PairData2 memory pairData2 = PairData2(token0, token1, reserve0, reserve1, pairAddresses[i]);
 
         //PairData memory pairData = PairData(address(this), address(this), 4, 4, "usdc", "usdc", 10, 10, address(this));
         result[0] = pairData;
         
+        //return new PairData[](end - start + 1);
+        return result;
+    }
+
+    function getPairDataUniswapV3(address[] memory pairAddresses) view public returns(PairData[] memory) {
+        PairData[] memory result = new PairData[](pairAddresses.length);
+        //console.log("allPairsLength: %s", allPairsLength);
+        for(uint256 i = 0; i < pairAddresses.length; i++) {
+            //(uint112 reserve0, uint112 reserve1,) = IUniswapV2Pair(pairAddresses[i]).getReserves();
+            address  token0 = IUniswapV3Pool(pairAddresses[i]).token0();
+            address  token1 = IUniswapV3Pool(pairAddresses[i]).token1();
+            uint112 fee = IUniswapV3Pool(pairAddresses[i]).fee();
+            console.log(token0);
+            console.log(token1);
+            string memory token0_symbol = IERC20(token0).symbol();
+            string memory token1_symbol = IERC20(token1).symbol();
+            console.log(token0_symbol);
+            console.log(token1_symbol);
+            uint8 token0_decimal = IERC20(token0).decimals();
+            uint8 token1_decimal = IERC20(token1).decimals();
+            
+            PairData memory pairData = PairData(token0, token1, token0_decimal, token1_decimal, token0_symbol, token1_symbol, 0, 0, pairAddresses[i], fee);
+            //PairData2 memory pairData2 = PairData2(token0, token1, reserve0, reserve1, pairAddresses[i]);
+
+            //PairData memory pairData = PairData(address(this), address(this), 4, 4, "usdc", "usdc", 10, 10, address(this));
+            result[i] = pairData;
+        }
         //return new PairData[](end - start + 1);
         return result;
     }
@@ -202,7 +231,7 @@ contract Pairs {
             string memory token1_symbol = IERC20(token1).symbol();
             uint8 token0_decimal = IERC20(token0).decimals();
             uint8 token1_decimal = IERC20(token1).decimals();*/
-            PairData memory pairData = PairData(_token0, _token1, _token0_decimal, _token1_decimal, _token0_symbol, _token1_symbol, _reserve0, _reserve1, _pairAddress);
+            PairData memory pairData = PairData(_token0, _token1, _token0_decimal, _token1_decimal, _token0_symbol, _token1_symbol, _reserve0, _reserve1, _pairAddress, 3000);
             result[i] = pairData;
            
         }

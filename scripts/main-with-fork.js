@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 const common = require("./common.js");
 const dfs = require("./dfs.js");
-const pairs = require("../files/top_uniswap_and_sushi_pairs.json");
+const pairs = require("../files/top_uni_sushi_uni_v3_pairs.json");
 const uni = require("@uniswap/v2-sdk");
 const { MultiCall } = require('@indexed-finance/multicall');
 const { ethers } = require("hardhat");
@@ -32,7 +32,7 @@ async function main() {
     var latestBlockNum = await ethers.provider.getBlockNumber();
     console.log("latestBlockNum: " + latestBlockNum);
     //await ethers.provider.getBlock(latestBlockNum + 1);
-    await common.updateReserves3(tradesCycles, arbContract);
+    await common.updateReserves4(tradesCycles, arbContract);
     /*for(var i = 0; i < tradesCycles.length; i++) {
       reqs.push(common.updateReserves2(tradesCycles[i], arbContract))
       //await common.updateReserves2(tradesCycles[i], arbContract);
@@ -56,7 +56,7 @@ async function main() {
     for(var i = 0; i < /*trades.length*/5; i++) {
       if(!trades[i]) continue;
         total++;
-      await common.updateReserves(trades[i].tradeCycle, arbContract);
+      await common.updateReserves4([trades[i].tradeCycle], arbContract);
       var EaEb = common.getEaEb6(trades[i].tradeCycle);
       var optimalInput = common.getOptimalInput3(EaEb);
       var optimalProfit = common.getOptimalProfit6(trades[i].tradeCycle, optimalInput);
@@ -65,7 +65,7 @@ async function main() {
       trades[i].optimalProfit = optimalProfit;
       //trades[i].tradeCycle = undefined;
       if(EaEb[0] < EaEb[1] && optimalProfit > 0) {
-        console.log(trades[i]);
+        //console.log(trades[i]);
         try {
           const tx = await arbContract.callLendingPool(
             [trades[i].path[0]],

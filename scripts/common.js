@@ -340,6 +340,34 @@ async function updateReserves3(tradesCycles, arbContract) {
 
 }
 
+async function updateReserves4(tradesCycles, arbContract) { 
+    const uniAndSushiPoolAddrs = new Set();
+    const uniV3PoolAddrs = new Set();
+    var hm = new Map();
+    for(var i = 0; i < tradesCycles.length; i++) {
+        for(var j = 0; j < tradesCycles[i].length; j++) {
+            hm.set(tradesCycles[i][j].address, tradesCycles[i][j]);
+            if(tradesCycles[i][j].exchange == "uni_v3") {
+                uniV3PoolAddrs.add(tradesCycles[i][j].address);
+            } else {
+                uniAndSushiPoolAddrs.add(tradesCycles[i][j].address);
+            }
+        }
+    }
+    var reservesUniAndSushi = await arbContract.getReserves2(Array.from(uniAndSushiPoolAddrs));
+    var reservesUniV3 = await arbContract.getReservesUni3(Array.from(uniV3PoolAddrs));
+    var reserves = [...reservesUniAndSushi, ...reservesUniV3];
+    reserves.forEach((reserve) => {
+        var poolAddress = reserve[2];
+        poolAddress = poolAddress.toLowerCase();
+        hm.get(poolAddress).reserve0 = BigInt(reserve[0]._hex);
+        hm.get(poolAddress).reserve1 = BigInt(reserve[1]._hex);
+    });
+    //Array.from(
+
+
+}
+
 async function updateReservesDirectFromUniswap(tradesCycles, provider, uniswapPairABI) { 
     var pools = [];
     var visited = new Set();
@@ -428,21 +456,17 @@ module.exports.getProfitableTrades = getProfitableTrades;
 module.exports.orderPairs = orderPairs;
 module.exports.updateReserves = updateReserves;
 module.exports.sortTrades = sortTrades;
-module.exports.getEaEb3 = getEaEb3;
-module.exports.getEaEb = getEaEb;
-module.exports.getEaEb2 = getEaEb2;
 module.exports.getEaEbCopied = getEaEbCopied;
 module.exports.getAprime = getAprime;
 module.exports.getTradePath = getTradePath;
-module.exports.getEaEb4 = getEaEb4;
 module.exports.getAprime2 = getAprime2;
 module.exports.getOptimalProfit4 = getOptimalProfit4;
 module.exports.updateReserves2 = updateReserves2;
 module.exports.updateReserves3 = updateReserves3;
 module.exports.updateReservesDirectFromUniswap = updateReservesDirectFromUniswap;
 module.exports.getOptimalProfit5 = getOptimalProfit5;
-module.exports.getEaEb5 = getEaEb5;
 module.exports.getAllExchanges = getAllExchanges;
 module.exports.getAllPaths = getAllPaths;
 module.exports.getOptimalProfit6 = getOptimalProfit6;
 module.exports.getEaEb6 = getEaEb6;
+module.exports.updateReserves4 = updateReserves4;

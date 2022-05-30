@@ -365,6 +365,14 @@ async function testUpdateReservesDirectFromUniswap() {
   var tradesCycles = 
 }*/
 
+async function testUpdateReservesUni3() {
+  const ArbContract = await hre.ethers.getContractFactory("ArbContract");
+  const arbContract = await ArbContract.deploy(AVVE_PROVIDER);
+  const poolAddrs = ["0x6c6bc977e13df9b0de53b251522280bb72383700"];
+  var results = await arbContract.getReservesUni3(poolAddrs);
+  console.log(results);
+}
+
 async function endlessLoop() {
   while(true) {
     await new Promise((res, rej) => {
@@ -387,4 +395,5 @@ process.on('SIGINT', function() {
 //testNegativeProfit();
 //testTradeResultsInZero();
 //testUpdateReservesDirectFromUniswap();
-endlessLoop();
+//endlessLoop();
+testUpdateReservesUni3();
