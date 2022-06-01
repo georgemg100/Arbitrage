@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 const common = require("./common.js");
 const dfs = require("./dfs.js");
-const pairs = require("../files/top_uniswap_and_sushi_pairs.json");
+const pairs = require("../files/top_uni_sushi_uni_v3_pairs.json");
 const uni = require("@uniswap/v2-sdk");
 const { MultiCall } = require('@indexed-finance/multicall');
 const { ethers } = require("hardhat");
@@ -12,7 +12,7 @@ const UNISWAPV3ROUTER = "0xE592427A0AEce92De3Edee1F18E0157C05861564";
 const AVVE_PROVIDER  = "0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5";
 const profitableTrades = [];
 const uniswapV2PairJSON = require("../artifacts/contracts/IUniswapV2Pair.sol/IUniswapV2Pair.json")
-
+const uniswapV3PoolJSON = require("@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json");
 
 //console.log(provider.network)
 async function main() {
@@ -20,7 +20,7 @@ async function main() {
     const tradesCycles = dfs.findArbs(tokenMap);
     var set = new Set();
     while(true) {
-        await common.updateReservesDirectFromUniswap(tradesCycles, provider, uniswapV2PairJSON.abi);
+        await common.updateReservesDirectFromUniswap2(tradesCycles, provider, uniswapV2PairJSON.abi, uniswapV3PoolJSON.abi);
         const trades = common.getProfitableTrades(tradesCycles);
         profitableTrades.push(...trades);
         await timeout(1000);

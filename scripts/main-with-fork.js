@@ -57,15 +57,15 @@ async function main() {
       if(!trades[i]) continue;
         total++;
       await common.updateReserves4([trades[i].tradeCycle], arbContract);
-      var EaEb = common.getEaEb6(trades[i].tradeCycle);
-      var optimalInput = common.getOptimalInput3(EaEb);
-      var optimalProfit = common.getOptimalProfit6(trades[i].tradeCycle, optimalInput);
+      var EaEb = common.getEaEb7(trades[i].tradeCycle);
+      var optimalInput = common.getOptimalInput4(EaEb, trades[i].tradeCycle[0].fee);
+      var optimalProfit = common.getOptimalProfit7(trades[i].tradeCycle, optimalInput);
       trades[i].EaEb = EaEb;
       trades[i].optimalInput = optimalInput;
       trades[i].optimalProfit = optimalProfit;
       //trades[i].tradeCycle = undefined;
       if(EaEb[0] < EaEb[1] && optimalProfit > 0) {
-        //console.log(trades[i]);
+        console.log(trades[i]);
         try {
           const tx = await arbContract.callLendingPool(
             [trades[i].path[0]],

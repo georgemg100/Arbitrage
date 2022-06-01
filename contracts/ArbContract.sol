@@ -381,17 +381,28 @@ contract ArbContract is FlashLoanReceiverBase, IERC721Receiver, IERC1155Receiver
     function getReservesUni3(address[] memory poolAddrs) view public returns (Reserves[] memory) {
         Reserves[] memory results = new Reserves[](poolAddrs.length);
             for(uint256 i = 0; i < poolAddrs.length; i++) {
+                console.log("pool address: %s", poolAddrs[i]);
                 uint128 liquidity = IUniswapV3Pool(poolAddrs[i]).liquidity();
+                console.log("liquidity: %s", liquidity);
                 (uint160 sqrtPrice,,,,,,) = IUniswapV3Pool(poolAddrs[i]).slot0();
+                console.log("sqrtPrice: %s", sqrtPrice);
                 uint256 reserve0 = (uint256(liquidity) << 96) / sqrtPrice;
-                uint256 reserve1 = FullMath.mulDiv(uint256(liquidity) << 96, sqrtPrice, 2 ** (96*2));
+                console.log("reserve0: %s", reserve0);
+                uint256 reserve1 = FullMath.mulDiv(uint256(liquidity), sqrtPrice, 2 ** (96));
+                console.log("reserve1: %s", reserve1);
                 //reserve0 = reserve0 >> (64);
                 //reserve1 = reserve1 >> (64);
+                //uint256 price = (sqrtPrice * sqrtPrice) >> (96 * 2);
+                //uint256 price2 = reserve1 / reserve0;
+                //uint256 liquidityCheck = reserve0 * reserve1;
+                /*console.log("liquidity Check: %s", liquidityCheck);
+                console.log("price: %s", price);
+                console.log("price2: %s", price2);
                 console.log("pool address: %s", poolAddrs[i]);
                 console.log("liquidity: %s", liquidity);
                 console.log("sqrtPrice: %s", sqrtPrice);
                 console.log("uniV3 reserve0: %s", reserve0);
-                console.log("uniV3 reserve1: %s", reserve1);
+                console.log("uniV3 reserve1: %s", reserve1);*/
                 Reserves memory reserves = Reserves(uint112(reserve0), uint112(reserve1), poolAddrs[i]);
                 results[i] = reserves;
             }
