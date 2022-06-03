@@ -3,6 +3,7 @@
 const { ethers } = require("hardhat");
 const feePercent = 0.003;
 const start_coins = require("../files/start_coins.json");
+const prices = require("./prices");
 const WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
 const r = 1 - feePercent;
 let https = require('https');
@@ -326,12 +327,13 @@ function getProfitableTrades(tradesCycles) {
                 trade.optimalInput = optimalInput;
                 trade.decimalInput = tradesCycles[idx].decimalInput;
                 trade.optimalProfit = Number(optimalProfit);
-                getOptimalProfitUSD(optimalProfit, tradesCycles[idx][0].token0.address, trade);
+                getOptimalProfitUSD(optimalProfit, tradesCycles[idx].startToken, trade);
                 //trade.tradeCycle = tradesCycles[idx];
                 trade.tradeCycle = tradesCycles[idx];
                 trade.path = tradesCycles[idx].path;//getTradePath(tradesCycles[idx]);
                 trade.exchangePath = tradesCycles[idx].exchangePath;
                 trade.exchangeToTradePath = exchangeToTradePath(tradesCycles[idx]);
+                trade.exchangeToFeesPath = exchangeToFeesPath(tradesCycles[idx]);
                 trade.ea = EaEb[0];
                 trade.eb = EaEb[1];
                 trades.push(trade);
@@ -343,11 +345,7 @@ function getProfitableTrades(tradesCycles) {
 }
 
 function getOptimalProfitUSD(optimalProfit, token, trade) {
-    if(token == WETH) {
-        trade.optimalProfitUSD = (Number(optimalProfit) / Math.pow(10, trade.decimalInput)) * (1/2000);
-    } else {
-        trade.optimalProfitUSD = Number(optimalProfit) / Math.pow(10, trade.decimalInput);
-    }
+        trade.optimalProfitUSD = (Number(optimalProfit) / Math.pow(10, trade.decimalInput)) * prices.getTokenPrice(token);
 }
 
 function getTradePath(tradeCycle) {
@@ -562,6 +560,22 @@ function exchangeToTradePath(tradeCycle) {
     return res;
 }
 
+function exchangeToFeesPath(tradeCycle) {
+    const exchangeNames = tradeCycle.exchangePath;
+    const res = [{exchange: exchangeNames[0], fees: [tradeCycle[0].fee]}]
+    var prevExch = exchangeNames[0]
+    for(var i = 1; i < exchangeNames.length; i++) {
+        //res[res.length - 1].fees.push(tradeCycle)
+        if(exchangeNames[i] == prevExch) {
+            res[res.length - 1].fees.push(tradeCycle[i].fee);
+        } else {
+            res.push({exchange: exchangeNames[i], fees: [tradeCycle[i].fee]});
+        }
+        prevExch = exchangeNames[i];
+    }
+    return res;
+}
+
 function getAllExchanges(exchangeToTradePath) {
     const exchanges = [];
     for(var i = 0; i < exchangeToTradePath.length; i++) {
@@ -576,6 +590,14 @@ function getAllPaths(exchangeToTradePath) {
         paths.push(exchangeToTradePath[i]._path);
     }
     return paths;
+}
+
+function getAllFees(exchangeToFeesPath) {
+    const fees = [];
+    for(var i = 0; i < exchangeToFeesPath.length; i++) {
+        fees.push(exchangeToFeesPath[i].fees);
+    }
+    return fees;
 }
 
 module.exports.getAllEaEb = getAllEaEb;
@@ -605,3 +627,5 @@ module.exports.getOptimalProfit5 = getOptimalProfit5;
 module.exports.getOptimalInput4 = getOptimalInput4;
 module.exports.getOptimalProfit7 = getOptimalProfit7;
 module.exports.updateReservesDirectFromUniswap2 = updateReservesDirectFromUniswap2;
+module.exports.getAllFees = getAllFees;
+module.exports.getOptimalProfitUSD = getOptimalProfitUSD;

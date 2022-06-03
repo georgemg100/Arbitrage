@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: Unlicense
 pragma experimental ABIEncoderV2;
 pragma solidity >= 0.6.12;
+//pragma solidiy = 0.7.5;
 import "hardhat/console.sol";
 import "@aave/protocol-v2/contracts/flashloan/base/FlashLoanReceiverBase.sol";
 import "./IERC721Receiver.sol";
@@ -9,7 +10,11 @@ import "./IUniswapV2Pair.sol";
 import "./IUniswapV2Factory.sol";
 import "./IUniswapV2Router02.sol";
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+import './ISwapRouter.sol';
 import "./FullMath.sol";
+import "./Path.sol";
+//import "./IUniswapV3SwapCallback.sol";
+//import "./TransferHelper.sol";
 /*interface IFlashLoanReceiver {
     function executeOperation(
         uint256[] calldata _ids,
@@ -20,6 +25,7 @@ import "./FullMath.sol";
 }*/
 
 contract ArbContract is FlashLoanReceiverBase, IERC721Receiver, IERC1155Receiver {
+    using Path for bytes;
     address WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address UNISWAPV3_ROUTER2 = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45;
     address public constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
@@ -40,7 +46,7 @@ contract ArbContract is FlashLoanReceiverBase, IERC721Receiver, IERC1155Receiver
     address NFTX_FEE_DISTRIBUTOR = 0xFD8a76dC204e461dB5da4f38687AdC9CC5ae4a86;
     address UNISWAP_V2_FACTORY = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
     address UNISWAP_V2_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
-    
+    address SWAP_ROUTER_UNI_V3 = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
     uint256 public balanceNFTX_COOL_CATS_VAULT;
     uint256 public balanceWETH;
     uint256 _tokenId;
@@ -53,6 +59,7 @@ contract ArbContract is FlashLoanReceiverBase, IERC721Receiver, IERC1155Receiver
     int256 _gainLoss;
     address[][] _paths;
     string[] _exchanges;
+    uint24[][] _fees;
     //ExchangeToTradePath[] _exchangeToTradePath;
     mapping(string => address[])[] _exchangeToTradePath;
 
@@ -81,12 +88,13 @@ contract ArbContract is FlashLoanReceiverBase, IERC721Receiver, IERC1155Receiver
     }
 
     //TODO: add onlyOwner modifier
-    function callLendingPool(address[] memory assets, uint256[] memory amounts, uint256[] memory modes, bytes calldata params, uint16 referralCode, ExchangeToTradePath[] memory exchangeToTradePath, address[][] memory paths, string[] memory exchanges) public {
+    function callLendingPool(address[] memory assets, uint256[] memory amounts, uint256[] memory modes, bytes calldata params, uint16 referralCode, ExchangeToTradePath[] memory exchangeToTradePath, address[][] memory paths, string[] memory exchanges, uint24[][] memory fees) public {
         console.log("callLendingPool");
         //console.log(paths[0][0]);
         //console.log(exchanges[0]);
         _paths = paths;
         _exchanges = exchanges;
+        _fees = fees;
         //_path = path;
         //_exchangeToTradePath = new mapping(string => address[])[](exchangeToTradePath.length);
         /*for(uint256 i = 0; i < exchangeToTradePath.length; i++) {
@@ -182,8 +190,10 @@ contract ArbContract is FlashLoanReceiverBase, IERC721Receiver, IERC1155Receiver
         for(uint256 i = 0; i < _exchanges.length; i++) {
             if(keccak256(bytes(_exchanges[i])) == keccak256(bytes("uni"))) {
                 swapExactTokensForTokensUniswap(balance, 0, _paths[i], address(this));
-            } else {
+            } else if(keccak256(bytes(_exchanges[i])) == keccak256(bytes("sushi"))) {
                 swapExactTokensForTokensSushi(balance, 0, _paths[i], address(this), block.timestamp + 600);
+            } else {
+                swapTokensUniswapV3(balance, _paths[i], _fees[i]);
             }
             uint256 pathsILen = _paths[i].length;
             balance = IERC20(_paths[i][pathsILen - 1]).balanceOf(address(this));
@@ -192,14 +202,6 @@ contract ArbContract is FlashLoanReceiverBase, IERC721Receiver, IERC1155Receiver
         _gainLoss = int256(balanceEnd) - int256(balanceStart);
         console.log("gain or loss: ");
         console.logInt(_gainLoss);
-        //uint256 balancePrev = uint256(IERC20(path[0]).balanceOf(address(this)));
-        //IERC20(path[0]).approve(UNISWAP_V2_ROUTER, amountIn);
-        //IUniswapV2Router02(UNISWAP_V2_ROUTER).swapExactTokensForTokens(amountIn, amountOutMin, path, address(this), block.timestamp + 600);
-        //uint256 balance = uint256(IERC20(path[0]).balanceOf(address(this)));
-        //_gainLoss = int256(balance) - int256(balancePrev);
-        //console.logInt(_gainLoss);
-        //console.log("balance for path %s: is %s at address %s", path[0], balance, address(this));
-        //console.log("balance / 10**18: %s", balance / 10**18);
     }
 
     /*function swapExactTokensForTokensUniswapV2(uint256 amountIn, uint256 amountOutMin, address[] memory path, address to) public payable {
@@ -219,16 +221,6 @@ contract ArbContract is FlashLoanReceiverBase, IERC721Receiver, IERC1155Receiver
         return balance;
     }*/
 
-    function getContractAddres() view  public returns(address) {
-        return address(this);
-    }
-
-    function getOwnerOfNft(address nftContract, uint256 specificId) public returns(address) {
-        (bool success, bytes memory data) = nftContract.call(abi.encodeWithSignature("ownerOf(uint256)", specificId));
-        address owner = abi.decode(data, (address));
-        return owner;
-    }
-
     function swapExactTokensForTokensSushi(uint amountIn, uint amountOutMin, address[] memory path, address to, uint deadline) public payable {
         console.log("swapTokensForExactTokensSushi");
         //IERC20(path[0]).approve(COOL_WETH_PAIR_SUSHI, amountIn);
@@ -247,6 +239,57 @@ contract ArbContract is FlashLoanReceiverBase, IERC721Receiver, IERC1155Receiver
         console.log("balance out: %s", balanceOut);
         //console.log("balance for path %s: is %s at address %s", path[1], balance, address(this));
         //console.log("balance / 10**18: %s", balance / 10**18);
+    }
+
+    function swapTokensUniswapV3(uint256 amountIn, address[] memory path, uint24[] memory fees) internal {
+        console.log("swapTokensUniswapV3");
+        //IERC20(path[0]).approve(SWAP_ROUTER_UNI_V3, amountIn);
+        (bool success, bytes memory data) = path[0].call(abi.encodeWithSelector(IERC20.approve.selector, SWAP_ROUTER_UNI_V3, amountIn));
+        console.log(success);
+        uint256 balanceIn = uint256(IERC20(path[0]).balanceOf(address(this)));
+        console.log("balance in: %s", balanceIn);
+        console.log("amount In: %s", amountIn);
+        uint256 pathLen = path.length;
+        bytes memory output;
+        for(uint256 i = 0; i < fees.length; i++) {
+            //console.log(path[i]);
+            //console.log(fees[i]);
+            output = abi.encodePacked(output, path[i]);
+            output = abi.encodePacked(output, fees[i]);
+        }
+        output = abi.encodePacked(output, path[path.length - 1]);
+        //console.log(path[path.length - 1]);
+        //bytes memory firstPool = output.getFirstPool();
+        //(address token1, address token2, uint24 fee) = output.decodeFirstPool();
+        //bytes memory secondPool = firstPool.getFirstPool();
+        //output = output.skipToken();//.skipToken();
+        //(address token3, address token4, uint24 fee2) = output.decodeFirstPool();
+        // console.log("decoded token1: %s", token1);
+        // console.log("decoded token2: %s", token2);
+        // console.log("decoded fee: %s", fee);
+        // console.log("decoded token3: %s", token3);
+        // console.log("decoded token4: %s", token4);
+        // console.log("decoded fee2: %s", fee2);
+        //console.log(output);
+        /*console.log("path[0]: %s", path[0]);
+        console.log("fees[0]: %s", fees[0]);
+        output = abi.encodePacked(path[0]);
+        console.log("encodePacked Called");
+        address addr1 = abi.decode(output, (address));*/
+        //console.log("decoded values:");
+        //console.log(addr1);
+        //console.log(fee1);
+        ISwapRouter.ExactInputParams memory params = 
+        ISwapRouter.ExactInputParams({
+                path: output,
+                recipient: address(this),
+                deadline: block.timestamp,
+                amountIn: amountIn,
+                amountOutMinimum: 0
+            });
+        ISwapRouter(SWAP_ROUTER_UNI_V3).exactInput(params);
+        uint256 balanceOut = uint256(IERC20(path[pathLen - 1]).balanceOf(address(this)));
+        console.log("balance out: %s", balanceOut);
     }
 
     /*function redeemNFTX(uint256 amount, uint256[] memory specificIds, address vault, address nftContract, uint256 nftType) public {
@@ -316,42 +359,6 @@ contract ArbContract is FlashLoanReceiverBase, IERC721Receiver, IERC1155Receiver
         //console.log("Cool cats nft balance: %s", balance);
     }*/
 
-    function depositNFT20(uint256[] memory specificIds, address vault, address nft, uint256 nftType) public {
-        //function multi721Deposit(uint256[] memory _ids, address _referral) public {
-        if(nftType == 1155) {
-            /*
-            function safeTransferFrom(
-                address from,
-                address to,
-                uint256 id,
-                uint256 amount,
-                bytes memory data
-            ) public virtual override {
-            */
-
-            //nft.call(abi.encodeWithSignature("setApprovalForAll(address,bool)", vault, true));
-            nft.call(abi.encodeWithSignature("safeTransferFrom(address,address,uint256,uint256,bytes)", address(this), vault, specificIds[0], 1, ""));
-        } else {
-            nft.call(abi.encodeWithSignature("approve(address,uint256)", vault, specificIds[0]));
-            vault.call(abi.encodeWithSignature("multi721Deposit(uint256[],address)", specificIds, address(0x0)));
-        }
-        
-        if(nftType == 1155) {
-            (bool success2, bytes memory data2) = nft.call(abi.encodeWithSignature("balanceOf(address,uint256)", address(this), specificIds[0]));
-            (bool success3, bytes memory data3) = nft.call(abi.encodeWithSignature("balanceOf(address,uint256)", vault, specificIds[0]));
-            uint256 balance = abi.decode(data2, (uint256));
-            uint256 balanceVault = abi.decode(data3, (uint256));
-            console.log("nft balance for %s is %s (after deposit)", address(this), balance);
-            console.log("nft balance for %s is %s (after deposit)", vault, balanceVault);
-        } else {
-            (bool success, bytes memory data) = nft.call(abi.encodeWithSignature("ownerOf(uint256)", specificIds[0]));
-            address owner = abi.decode(data, (address));
-            console.log("owner after adding nft back to vault: %s", owner);
-        }
-        uint256 balance = IERC20(vault).balanceOf(address(this));
-        console.log("amount NFT20_COOLCATS_VAULT: %s", balance);
-    }
-
     function getReserves(address poolAddress) view public returns (uint112, uint112, uint32)  {
         //(bool success, bytes memory data) = poolAddress.call(abi.encodeWithSignature("getReserves()"));
         //(uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast) = abi.decode(data, (uint112, uint112, uint32));
@@ -390,19 +397,6 @@ contract ArbContract is FlashLoanReceiverBase, IERC721Receiver, IERC1155Receiver
                 console.log("reserve0: %s", reserve0);
                 uint256 reserve1 = FullMath.mulDiv(uint256(liquidity), sqrtPrice, 2 ** (96));
                 console.log("reserve1: %s", reserve1);
-                //reserve0 = reserve0 >> (64);
-                //reserve1 = reserve1 >> (64);
-                //uint256 price = (sqrtPrice * sqrtPrice) >> (96 * 2);
-                //uint256 price2 = reserve1 / reserve0;
-                //uint256 liquidityCheck = reserve0 * reserve1;
-                /*console.log("liquidity Check: %s", liquidityCheck);
-                console.log("price: %s", price);
-                console.log("price2: %s", price2);
-                console.log("pool address: %s", poolAddrs[i]);
-                console.log("liquidity: %s", liquidity);
-                console.log("sqrtPrice: %s", sqrtPrice);
-                console.log("uniV3 reserve0: %s", reserve0);
-                console.log("uniV3 reserve1: %s", reserve1);*/
                 Reserves memory reserves = Reserves(uint112(reserve0), uint112(reserve1), poolAddrs[i]);
                 results[i] = reserves;
             }

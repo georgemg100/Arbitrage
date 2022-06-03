@@ -22,10 +22,14 @@ async function main() {
     while(true) {
         await common.updateReservesDirectFromUniswap2(tradesCycles, provider, uniswapV2PairJSON.abi, uniswapV3PoolJSON.abi);
         const trades = common.getProfitableTrades(tradesCycles);
-        profitableTrades.push(...trades);
+        //profitableTrades.push(...trades);
+        common.sortTrades(trades)
+        for(var i = 0; i < 10; i++) {
+          profitableTrades.push(trades[i]);
+        }
+        //if(trades)
         await timeout(1000);
     }
-    
 }
 
 main()
@@ -38,11 +42,11 @@ main()
 process.on('SIGINT', function() {
     console.log("Caught interrupt signal");
     common.sortTrades(profitableTrades);
-    var prev;
-    for(var i = 0; i < profitableTrades.length; i++) {
-        if(i >= profitableTrades.length) break;
-        if(prev && profitableTrades[i].optimalProfitUSD == prev.optimalProfitUSD) continue;
-        prev = profitableTrades[i];
+    //var prev;
+    for(var i = 0; i < /*profitableTrades.length*/ 100; i++) {
+        //if(i >= profitableTrades.length) break;
+        //if(prev && profitableTrades[i].optimalProfitUSD == prev.optimalProfitUSD) continue;
+        //prev = profitableTrades[i];
         console.log(profitableTrades[i]);
     }
     process.exit();

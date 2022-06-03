@@ -6,7 +6,6 @@ const uni = require("@uniswap/v2-sdk");
 const { MultiCall } = require('@indexed-finance/multicall');
 const { ethers } = require("hardhat");
 
-
 const UNISWAPV3ROUTER2 = "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45";
 const UNISWAPV3ROUTER = "0xE592427A0AEce92De3Edee1F18E0157C05861564";
 const AVVE_PROVIDER  = "0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5";
@@ -53,19 +52,23 @@ async function main() {
     const end = d2.getTime()
     const duration = end - start;
     console.log("duration: " + duration);
-    for(var i = 0; i < /*trades.length*/5; i++) {
+    for(var i = 0; i < /*trades.length*/10; i++) {
       if(!trades[i]) continue;
         total++;
       await common.updateReserves4([trades[i].tradeCycle], arbContract);
       var EaEb = common.getEaEb7(trades[i].tradeCycle);
+      if(!EaEb || EaEb[0] > EaEb[1]) continue;
       var optimalInput = common.getOptimalInput4(EaEb, trades[i].tradeCycle[0].fee);
       var optimalProfit = common.getOptimalProfit7(trades[i].tradeCycle, optimalInput);
       trades[i].EaEb = EaEb;
       trades[i].optimalInput = optimalInput;
       trades[i].optimalProfit = optimalProfit;
+      common.getOptimalProfitUSD(optimalProfit, trades[i].tradeCycle.startToken, trades[i])
       //trades[i].tradeCycle = undefined;
       if(EaEb[0] < EaEb[1] && optimalProfit > 0) {
         console.log(trades[i]);
+        console.log("exchangeToFeesPath: " + JSON.stringify(trades[i].exchangeToFeesPath))
+        console.log("exchangeToTradePath: " + JSON.stringify(trades[i].exchangeToTradePath))
         try {
           const tx = await arbContract.callLendingPool(
             [trades[i].path[0]],
@@ -80,7 +83,8 @@ async function main() {
             //[["0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"],["0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"]],
             //["uni", "sushi"]
             common.getAllPaths(trades[i].exchangeToTradePath),
-            common.getAllExchanges(trades[i].exchangeToTradePath)
+            common.getAllExchanges(trades[i].exchangeToTradePath),
+            common.getAllFees(trades[i].exchangeToFeesPath)
           );
           const gainLoss = await arbContract.getGainLoss();
           if(Number(gainLoss._hex) <= 0) {
