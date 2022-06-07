@@ -373,6 +373,23 @@ async function testUpdateReservesUni3() {
   console.log(results);
 }
 
+async function testUpdateReservesBalancer() {
+  const ArbContract = await hre.ethers.getContractFactory("ArbContract");
+  const arbContract = await ArbContract.deploy(AVVE_PROVIDER);
+  const poolAddrs = ["0x5c6ee304399dbdb9c8ef030ab642b10820db8f56"];
+  var results = await arbContract.getReservesBalancer(poolAddrs);
+  console.log("results: ");
+  console.log(results);
+}
+
+async function testGetPairDataBalancer() {
+  const PairContract = await hre.ethers.getContractFactory("Pairs");
+  const pairContract = await PairContract.deploy();
+  const poolAddrs = ["0x5c6ee304399dbdb9c8ef030ab642b10820db8f56"];
+  const results = await pairContract.getPairDataBalancer(poolAddrs);
+  console.log(results);
+}
+
 async function endlessLoop() {
   while(true) {
     await new Promise((res, rej) => {
@@ -396,4 +413,6 @@ process.on('SIGINT', function() {
 //testTradeResultsInZero();
 //testUpdateReservesDirectFromUniswap();
 //endlessLoop();
-testUpdateReservesUni3();
+//testUpdateReservesUni3();
+//testUpdateReservesBalancer();
+testGetPairDataBalancer();

@@ -23,7 +23,7 @@ module.exports = {
     hardhat: {
       forking: {
         url: "https://eth-mainnet.alchemyapi.io/v2/3aX4C7z0ix_3AkdmdFep5Bagm-hN5AW6",
-        blockNumber: 14893903
+        blockNumber: 14921800 
       }
     },
     localhost: {
@@ -51,6 +51,9 @@ module.exports = {
       },
       {
         version: "0.7.5",
+      },
+      {
+        version: "^0.7.0"
       }
     ],
   }

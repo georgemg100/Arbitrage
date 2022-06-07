@@ -16,10 +16,12 @@ feeNumeratorsMap.set(100, BigInt(9999));
 feeNumeratorsMap.set(3000, BigInt(997));
 feeNumeratorsMap.set(500, BigInt(9995));
 feeNumeratorsMap.set(10000, BigInt(99));
+feeNumeratorsMap.set(20000000000000000, BigInt(20000000000000000));
 feeDenominatorsMap.set(3000, BigInt(1000));
 feeDenominatorsMap.set(500, BigInt(10000));
 feeDenominatorsMap.set(10000, BigInt(100));
 feeDenominatorsMap.set(100, BigInt(10000));
+feeDenominatorsMap.set(20000000000000000, BigInt(1000000000000000000));
 
 const createTokenMap = (pairs) => {
     const tokenMap = new Map();
@@ -53,7 +55,7 @@ tokenMap.forEach((v,k) => {
 function getAllEaEb(tradesCycles) {
     const allEaEb = Array();
     tradesCycles.forEach((tradeCycle) => {
-        allEaEb.push(getEaEb7(tradeCycle));
+        allEaEb.push(getEaEb8(tradeCycle));
     });
     return allEaEb;
 }
@@ -126,6 +128,42 @@ function getEaEb7(tradeCycle) {
     return [Ea, Eb, startToken];
 }
 
+function getEaEb8(tradeCycle) {
+    //const startCoins = new Set();
+    //start_coins.forEach((value) => { startCoins.add(value.address)});
+    const tradeCycleLen = tradeCycle.length;
+    var startToken = tradeCycle.startToken;
+    var nextToken = tradeCycle[0].token0.address == startToken ? tradeCycle[0].token1.address : tradeCycle[0].token0.address;
+    //var feeNumerator = tradeCycle[0].fee;
+    var r0 = startToken == tradeCycle[0].token0.address ? tradeCycle[0].reserve0 : tradeCycle[0].reserve1;
+    var r1 = nextToken == tradeCycle[0].token0.address ? tradeCycle[0].reserve0 : tradeCycle[0].reserve1;
+    tradeCycle.path = [startToken];
+    tradeCycle.exchangePath = [tradeCycle[0].exchange];
+    var Ea = BigInt(r0);//(997 *tradeCycle[0].reserve1 * tradeCycle[1].reserve1)/(1000 * tradeCycle[1].reserve0 + tradeCycle[0].reserve1 * r);
+    var Eb = BigInt(r1);//(tradeCycle[0].reserve0 * tradeCycle[1].reserve0)/(tradeCycle[1].reserve0 +  tradeCycle[0].reserve1 * r);)
+    for(var i = 1; i < tradeCycle.length; i++) {
+        startToken = nextToken;//tradeCycle[i].token0.address != tradeCycle[(i + 1) % tradeCycle.length].token0.address && tradeCycle[i].token0.address != tradeCycle[(i + 1) % tradeCycle.length].token1.address ? tradeCycle[i].token0.address : tradeCycle[i].token1.address;
+        nextToken = tradeCycle[i].token0.address == startToken ? tradeCycle[i].token1.address : tradeCycle[i].token0.address;
+        var feeNumerator = BigInt(tradeCycle[i].feeNumerator);//feeNumeratorsMap.get(tradeCycle[i].fee);
+        var feeDenominator = BigInt(tradeCycle[i].feeDenominator);//feeDenominatorsMap.get(tradeCycle[i].fee);
+        r0 = startToken == tradeCycle[i].token0.address ? tradeCycle[i].reserve0 : tradeCycle[i].reserve1;
+        r1 = nextToken == tradeCycle[i].token0.address ? tradeCycle[i].reserve0 : tradeCycle[i].reserve1;
+        if(r0 == 0 || r1 == 0) return;
+        Ea = (Ea * BigInt(r0) * feeDenominator)/(feeDenominator * BigInt(r0) + Eb * feeNumerator);
+        Eb = (Eb * BigInt(r1) * feeNumerator)/(feeDenominator * BigInt(r0) + Eb * feeNumerator);
+        tradeCycle.path.push(startToken);
+        tradeCycle.exchangePath.push(tradeCycle[i].exchange);
+        //console.log("Ea: " + Ea);
+        //console.log("Eb: " + Eb);
+        if(Ea == 0 || Eb == 0) {
+            return;
+        }
+    }
+    tradeCycle.path.push(nextToken);
+    tradeCycle.decimalInput = tradeCycle[tradeCycleLen - 1].token0.address == nextToken ? tradeCycle[tradeCycleLen - 1].token0.decimal : tradeCycle[tradeCycleLen - 1].token1.decimal
+    return [Ea, Eb, startToken];
+}
+
 function getEaEbCopied(tradeCycle) {
     const startToken = tradeCycle[0].token0.address;
     var Ea = Number(tradeCycle[0].reserve0);
@@ -159,7 +197,18 @@ function getOptimalInput4(EaEb, startFee) {
     //return Decimal(int((Decimal.sqrt(Ea*Eb*d997*d1000)-Ea*d1000)/d997))
     var feeNumerator = feeNumeratorsMap.get(startFee);
     var feeDenominator = feeDenominatorsMap.get(startFee);
-    return (Math.sqrt(Number(Number(EaEb[0]) * Number(EaEb[1]) * Number(feeNumerator) * Number(feeDenominator))) - Number(Number(EaEb[0]) * Number(feeDenominator)))/Number(997);
+    return (Math.sqrt(Number(Number(EaEb[0]) * Number(EaEb[1]) * Number(feeNumerator) * Number(feeDenominator))) - Number(Number(EaEb[0]) * Number(feeDenominator)))/Number(feeNumerator);
+}
+
+function getOptimalInput5(EaEb, startFeeNumerator, startFeeDenominator) {
+    //return Decimal(int((Decimal.sqrt(Ea*Eb*d997*d1000)-Ea*d1000)/d997))
+    var feeNumerator = startFeeNumerator//tradeCycle[0].feeNumerator;//feeNumeratorsMap.get(startFee);
+    var feeDenominator = startFeeDenominator//tradeCycle[0].feeDenominator;//feeDenominatorsMap.get(startFee);
+    const optimalInput = (Math.sqrt(Number(Number(EaEb[0]) * Number(EaEb[1]) * Number(feeNumerator) * Number(feeDenominator))) - Number(Number(EaEb[0]) * Number(feeDenominator)))/Number(feeNumerator);
+    if(!optimalInput) {
+        console.log("NaN");
+    }
+    return optimalInput;
 }
 
 function getOptimalProfit(EaEb, optimalInput) {
@@ -208,6 +257,14 @@ function getOptimalProfit7(tradeCycle, optimalInput) {
     optimalInput = Math.floor(optimalInput);
     
     const aprime = getAprime5(tradeCycle, optimalInput);
+    //console.log(aprime);
+    return aprime - BigInt(optimalInput);
+}
+
+function getOptimalProfit8(tradeCycle, optimalInput) {
+    optimalInput = Math.floor(optimalInput);
+    
+    const aprime = getAprime6(tradeCycle, optimalInput);
     //console.log(aprime);
     return aprime - BigInt(optimalInput);
 }
@@ -308,19 +365,37 @@ function getAprime5(tradeCycle, optimalInput) {
     return a;
 }
 
+function getAprime6(tradeCycle, optimalInput) {
+    const tradeCycleLen = tradeCycle.length;
+    //const startToken = tradeCycle[0].token0.address;
+    //var startToken = tradeCycle[0].token0.address != tradeCycle[1].token0.address && tradeCycle[0].token0.address != tradeCycle[1].token1.address ? tradeCycle[0].token0.address : tradeCycle[0].token1.address;
+    var startToken = tradeCycle.startToken;//startCoins.has(tradeCycle[0].token0.address) && firstPairTokens.has(tradeCycle[0].token0.address) && lastPairTokens.has(tradeCycle[0].token0.address)? tradeCycle[0].token0.address : tradeCycle[0].token1.address;
+    var nextToken = tradeCycle[0].token0.address == startToken ? tradeCycle[0].token1.address : tradeCycle[0].token0.address;
+    var r0 = startToken == tradeCycle[0].token0.address ? tradeCycle[0].reserve0 : tradeCycle[0].reserve1;
+    var r1 = nextToken == tradeCycle[0].token0.address ? tradeCycle[0].reserve0 : tradeCycle[0].reserve1;
+    var feeNumerator = BigInt(tradeCycle[0].feeNumerator);//feeNumeratorsMap.get(tradeCycle[0].fee);
+    var feeDenominator = BigInt(tradeCycle[0].feeDenominator);//feeDenominatorsMap.get(tradeCycle[0].fee);
+    var a = (r1 * feeNumerator * BigInt(optimalInput)) / (feeDenominator * r0 + BigInt(optimalInput) * feeNumerator);
+    for(var i = 1; i < tradeCycle.length; i++) {
+        feeNumerator = BigInt(tradeCycle[i].feeNumerator);//feeNumeratorsMap.get(tradeCycle[i].fee);
+        feeDenominator = BigInt(tradeCycle[i].feeDenominator);//feeDenominatorsMap.get(tradeCycle[i].fee);
+        startToken = nextToken;//tradeCycle[i].token0.address != tradeCycle[(i + 1) % tradeCycle.length].token0.address && tradeCycle[i].token0.address != tradeCycle[(i + 1) % tradeCycle.length].token1.address ? tradeCycle[i].token0.address : tradeCycle[i].token1.address;
+        nextToken = tradeCycle[i].token0.address == startToken ? tradeCycle[i].token1.address : tradeCycle[i].token0.address;
+        r0 = startToken == tradeCycle[i].token0.address ? tradeCycle[i].reserve0 : tradeCycle[i].reserve1;
+        r1 = nextToken == tradeCycle[i].token0.address ? tradeCycle[i].reserve0 : tradeCycle[i].reserve1;
+        a = (r1 * feeNumerator * a) / (feeDenominator * r0 + a * feeNumerator);
+    }
+    return a;
+}
+
 function getProfitableTrades(tradesCycles) {
     const trades = Array();
     const allEaEb = getAllEaEb(tradesCycles);
     allEaEb.forEach((EaEb, idx) => {
         if(EaEb && EaEb[0] < EaEb[1]) {
-            var optimalInput = getOptimalInput4(EaEb, tradesCycles[idx][0].fee);
-            //const optimalProfit = getOptimalProfit3(EaEb, optimalInput);
-            //different start and end stable coins may have different decimals
-        // var startDecimal = tradesCycles[idx][0].token0.address == tradesCycles[idx].startToken ? tradesCycles[idx][0].token0.decimal : tradesCycles[idx][0].token1.decimal;
-        // var endDecimal = tradesCycles[idx][tradesCycles[idx].length - 1].token0.address == tradesCycles[idx].endtoken ? tradesCycles[idx][tradesCycles[idx].length - 1].token0.decimal : tradesCycles[idx][tradesCycles[idx].length - 1].token1.decimal;
-        // optimalInput *= Math.pow(10, startDecimal - endDecimal);
-        // optimalInput = Math.floor(optimalInput);
-            const optimalProfit = getOptimalProfit7(tradesCycles[idx], optimalInput);
+            var optimalInput = getOptimalInput5(EaEb, tradesCycles[idx][0].feeNumerator, tradesCycles[idx][0].feeDenominator);
+
+            const optimalProfit = getOptimalProfit8(tradesCycles[idx], optimalInput);
             if(/*optimalProfit > 0 &&*/ optimalInput > 0) {
                 //trades.push({"optimalInput": optimalInput, "optimalProfit": optimalProfit, "inputToken": tradesCycles[idx].t})
                 var trade = {}
@@ -334,6 +409,7 @@ function getProfitableTrades(tradesCycles) {
                 trade.exchangePath = tradesCycles[idx].exchangePath;
                 trade.exchangeToTradePath = exchangeToTradePath(tradesCycles[idx]);
                 trade.exchangeToFeesPath = exchangeToFeesPath(tradesCycles[idx]);
+                trade.exchangeToPoolsPath = exchangeToPoolAddresses(tradesCycles[idx]);
                 trade.ea = EaEb[0];
                 trade.eb = EaEb[1];
                 trades.push(trade);
@@ -428,12 +504,15 @@ async function updateReserves3(tradesCycles, arbContract) {
 async function updateReserves4(tradesCycles, arbContract) { 
     const uniAndSushiPoolAddrs = new Set();
     const uniV3PoolAddrs = new Set();
+    const balancerPoolAddrs = new Set();
     var hm = new Map();
     for(var i = 0; i < tradesCycles.length; i++) {
         for(var j = 0; j < tradesCycles[i].length; j++) {
             hm.set(tradesCycles[i][j].address, tradesCycles[i][j]);
             if(tradesCycles[i][j].exchange == "uni_v3") {
                 uniV3PoolAddrs.add(tradesCycles[i][j].address);
+            } else if(tradesCycles[i][j].exchange == "balancer") {
+                balancerPoolAddrs.add(tradesCycles[i][j].address);
             } else {
                 uniAndSushiPoolAddrs.add(tradesCycles[i][j].address);
             }
@@ -441,7 +520,8 @@ async function updateReserves4(tradesCycles, arbContract) {
     }//0x9d96880952b4c80a55099b9c258250f2cc5813ec
     var reservesUniAndSushi = await arbContract.getReserves2(Array.from(uniAndSushiPoolAddrs));
     var reservesUniV3 = await arbContract.getReservesUni3(Array.from(uniV3PoolAddrs));
-    var reserves = [...reservesUniV3, ...reservesUniAndSushi];
+    var reservesBalancer = await arbContract.getReservesBalancer(Array.from(balancerPoolAddrs));
+    var reserves = [...reservesUniV3, ...reservesUniAndSushi, ... reservesBalancer];
     reserves.forEach((reserve) => {
         var poolAddress = reserve[2];
         poolAddress = poolAddress.toLowerCase();
@@ -562,14 +642,30 @@ function exchangeToTradePath(tradeCycle) {
 
 function exchangeToFeesPath(tradeCycle) {
     const exchangeNames = tradeCycle.exchangePath;
-    const res = [{exchange: exchangeNames[0], fees: [tradeCycle[0].fee]}]
+    const res = [{exchange: exchangeNames[0], fees: [BigInt(tradeCycle[0].fee)]}]
     var prevExch = exchangeNames[0]
     for(var i = 1; i < exchangeNames.length; i++) {
         //res[res.length - 1].fees.push(tradeCycle)
         if(exchangeNames[i] == prevExch) {
-            res[res.length - 1].fees.push(tradeCycle[i].fee);
+            res[res.length - 1].fees.push(BigInt(tradeCycle[i].fee));
         } else {
-            res.push({exchange: exchangeNames[i], fees: [tradeCycle[i].fee]});
+            res.push({exchange: exchangeNames[i], fees: [BigInt(tradeCycle[i].fee)]});
+        }
+        prevExch = exchangeNames[i];
+    }
+    return res;
+}
+
+function exchangeToPoolAddresses(tradeCycle) {
+    const exchangeNames = tradeCycle.exchangePath;
+    const res = [{exchange: exchangeNames[0], poolAddresses: [tradeCycle[0].address]}]
+    var prevExch = exchangeNames[0]
+    for(var i = 1; i < exchangeNames.length; i++) {
+        //res[res.length - 1].fees.push(tradeCycle)
+        if(exchangeNames[i] == prevExch) {
+            res[res.length - 1].poolAddresses.push(tradeCycle[i].address);
+        } else {
+            res.push({exchange: exchangeNames[i], poolAddresses: [tradeCycle[i].address]});
         }
         prevExch = exchangeNames[i];
     }
@@ -598,6 +694,14 @@ function getAllFees(exchangeToFeesPath) {
         fees.push(exchangeToFeesPath[i].fees);
     }
     return fees;
+}
+
+function getAllPools(exchangeToPoolsPath) {
+    const pools = [];
+    for(var i = 0; i < exchangeToPoolsPath.length; i++) {
+        pools.push(exchangeToPoolsPath[i].poolAddresses);
+    }
+    return pools;
 }
 
 module.exports.getAllEaEb = getAllEaEb;
@@ -629,3 +733,7 @@ module.exports.getOptimalProfit7 = getOptimalProfit7;
 module.exports.updateReservesDirectFromUniswap2 = updateReservesDirectFromUniswap2;
 module.exports.getAllFees = getAllFees;
 module.exports.getOptimalProfitUSD = getOptimalProfitUSD;
+module.exports.getEaEb8 = getEaEb8;
+module.exports.getOptimalInput5 = getOptimalInput5;
+module.exports.getOptimalProfit8 = getOptimalProfit8;
+module.exports.getAllPools = getAllPools;
