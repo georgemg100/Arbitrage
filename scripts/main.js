@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 const common = require("./common.js");
 const dfs = require("./dfs.js");
-const pairs = require("../files/top_uni_sushi_uni_v3_pairs.json");
+const pairs = require("../files/top_uni_sushi_uni_v3_balancer_pairs.json");
 const uni = require("@uniswap/v2-sdk");
 const { MultiCall } = require('@indexed-finance/multicall');
 const { ethers } = require("hardhat");

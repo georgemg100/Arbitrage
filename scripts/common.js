@@ -202,9 +202,11 @@ function getOptimalInput4(EaEb, startFee) {
 
 function getOptimalInput5(EaEb, startFeeNumerator, startFeeDenominator) {
     //return Decimal(int((Decimal.sqrt(Ea*Eb*d997*d1000)-Ea*d1000)/d997))
-    var feeNumerator = startFeeNumerator//tradeCycle[0].feeNumerator;//feeNumeratorsMap.get(startFee);
-    var feeDenominator = startFeeDenominator//tradeCycle[0].feeDenominator;//feeDenominatorsMap.get(startFee);
+    var feeNumerator = 999500//startFeeNumerator//tradeCycle[0].feeNumerator;//feeNumeratorsMap.get(startFee);
+    var feeDenominator = 1000000//startFeeDenominator//tradeCycle[0].feeDenominator;//feeDenominatorsMap.get(startFee);
+    //var r = feeNumerator / feeDenominator;
     const optimalInput = (Math.sqrt(Number(Number(EaEb[0]) * Number(EaEb[1]) * Number(feeNumerator) * Number(feeDenominator))) - Number(Number(EaEb[0]) * Number(feeDenominator)))/Number(feeNumerator);
+    //const optimalInput = (Math.sqrt(Number(EaEb[0]) * Number(EaEb[1])) - Number(EaEb[0]));
     if(!optimalInput) {
         console.log("NaN");
     }
