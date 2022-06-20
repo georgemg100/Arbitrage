@@ -22,11 +22,11 @@ async function main() {
     const multi = new MultiCall(ethers.provider)
     const ArbContract = await hre.ethers.getContractFactory("ArbContract");
     //constructor(ILendingPoolAddressesProvider provider, uint256 tokenId, uint256 nftVault, uint256 nftContract, uint256 nftType) public FlashLoanReceiverBase(provider) {
-    const arbContract = await ArbContract.deploy(AVVE_PROVIDER, ETH_ACCOUNT);
+    const arbContract = await ArbContract.deploy(AVVE_PROVIDER);
     await arbContract.deployed();
     console.log("estimate gas: ")
-    console.log("gas limit deploy: " + arbContract.deployTransaction.gasLimit)
-    const gas = await ethers.getDefaultProvider().estimateGas(arbContract.deployTransaction)
+    //console.log("gas limit deploy: " + arbContract.deployTransaction.gasLimit)
+    //const gas = await ethers.getDefaultProvider().estimateGas(arbContract.deployTransaction)
     // We get the contract to deploy
     const tokenMap = common.createTokenMap(pairs);
     const tradesCycles = dfs.findArbs(tokenMap, arbContract);

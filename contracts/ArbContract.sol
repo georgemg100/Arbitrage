@@ -18,8 +18,9 @@ import "./IWeightedPool2Tokens.sol";
 import "./IAsset.sol";
 import "./TransferHelper.sol";
 import "./IWETH.sol";
+import "./Ownable.sol";
 
-contract ArbContract is FlashLoanReceiverBase {
+contract ArbContract is FlashLoanReceiverBase, Ownable {
     //using SafeERC20 for IERC20;
     //using Path for bytes;
     address WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
@@ -31,8 +32,6 @@ contract ArbContract is FlashLoanReceiverBase {
     address UNISWAP_V2_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
     address SWAP_ROUTER_UNI_V3 = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
     address BALANCER_VAULT = 0xBA12222222228d8Ba445958a75a0704d566BF2C8;
-    //uint256 public balanceNFTX_COOL_CATS_VAULT;
-    //uint256 public balanceWETH;
     address[] _path;
     int256 _gainLoss;
     address[][] _paths;
@@ -40,7 +39,7 @@ contract ArbContract is FlashLoanReceiverBase {
     uint256[][] _fees;
     address[][] _poolAddresses;
     uint256 _percentToCoinbase;
-    address _owner;
+    //address _owner;
     //ExchangeToTradePath[] _exchangeToTradePath;
     mapping(string => address[])[] _exchangeToTradePath;
 
@@ -59,28 +58,18 @@ contract ArbContract is FlashLoanReceiverBase {
 
     }
 
-    constructor(ILendingPoolAddressesProvider provider, address owner) public FlashLoanReceiverBase(provider) {
-        _owner = owner;
+    constructor(ILendingPoolAddressesProvider provider) public FlashLoanReceiverBase(provider) {
+//        _owner = owner;
     }
 
     //TODO: add onlyOwner modifier
-    function callLendingPool(address[] memory assets, uint256[] memory amounts/*, uint256[] memory modes*//*, bytes calldata params*//*, uint16 referralCode*/, ExchangeToTradePath[] memory exchangeToTradePath, address[][] memory paths, string[] memory exchanges, uint256[][] memory fees, address[][] memory poolAddresses, uint256 percentToCoinbase) public {
+    function callLendingPool(address[] memory assets, uint256[] memory amounts, ExchangeToTradePath[] memory exchangeToTradePath, address[][] memory paths, string[] memory exchanges, uint256[][] memory fees, address[][] memory poolAddresses, uint256 percentToCoinbase) public onlyOwner {
         console.log("callLendingPool");
-        //console.log(paths[0][0]);
-        //console.log(exchanges[0]);
         _paths = paths;
         _exchanges = exchanges;
         _fees = fees;
         _poolAddresses = poolAddresses;
        _percentToCoinbase = percentToCoinbase;
-        //_path = path;
-        //_exchangeToTradePath = new mapping(string => address[])[](exchangeToTradePath.length);
-        /*for(uint256 i = 0; i < exchangeToTradePath.length; i++) {
-            _exchangeToTradePath[i][exchangeToTradePath[i].exchange] = exchangeToTradePath[i]._path;
-            console.log(_exchangeToTradePath[i]["uni"][0]);
-        }*/
-        //console.log("pathExchange: %s", _exchangeToTradePath[0].exchange);
-        //console.log("pathAddresses: %s", exchangeToTradePath[0]._path[0]);
         uint256[] memory modes = new uint256[](1);
         modes[0] = 0;
         LENDING_POOL.flashLoan(address(this), assets, amounts, modes, address(this), "0x", 0);
@@ -134,13 +123,13 @@ contract ArbContract is FlashLoanReceiverBase {
             IWETH(WETH).withdraw(toCoinbase + toKeep);
             console.log("toKeep: %s", toKeep);
             console.log("toCoinbase: %s", toCoinbase);
-            console.log("owner balance before: %s", address(_owner).balance);
+            console.log("owner balance before: %s", address(owner()).balance);
             console.log("contract balance eth: %s", address(this).balance);
             console.log("coinbase balance before: %s", block.coinbase.balance);
             block.coinbase.transfer(toCoinbase);
             console.log("coinbase balance after: %s", block.coinbase.balance);
-            payable(_owner).call{value: toKeep}("");
-            console.log("owner balance after: %s", address(_owner).balance);
+            payable(owner()).call{value: toKeep}("");
+            console.log("owner balance after: %s", address(owner()).balance);
             return true;
         }
     }
@@ -173,7 +162,7 @@ contract ArbContract is FlashLoanReceiverBase {
 
     }*/
 
-    function swapExactTokensForTokensUniswap(uint256 amountIn, uint256 amountOutMin, address[] memory path, address to) public payable {
+    function swapExactTokensForTokensUniswap(uint256 amountIn, uint256 amountOutMin, address[] memory path, address to) internal {
         console.log("swapExactTokensForTokensUniswap");
         //console.log("total supply of BAYC20", IERC20(BAYC20).totalSupply());
         uint256 pathLen = path.length;
@@ -182,13 +171,13 @@ contract ArbContract is FlashLoanReceiverBase {
         //IERC20(path[0]).approve(UNISWAP_V2_ROUTER, amountIn);
         TransferHelper.safeApprove(path[0], UNISWAP_V2_ROUTER, amountIn);
 
-        IUniswapV2Router02(UNISWAP_V2_ROUTER).swapExactTokensForTokens(amountIn, amountOutMin, path, address(this), block.timestamp + 600);
+        IUniswapV2Router02(UNISWAP_V2_ROUTER).swapExactTokensForTokens(amountIn, amountOutMin, path, address(this), block.timestamp + 60);
         //UNISWAP_V2_ROUTER.call(abi.encodeWithSignature("swapExactTokensForTokens(uint256,uint256,address[],address,uint256)", amountIn, amountOutMin, path, address(this), block.timestamp + 600));
         uint256 balanceOut = uint256(IERC20(path[pathLen - 1]).balanceOf(address(this)));
         console.log("balance out: %s", balanceOut);
     }
 
-    function swapExactTokensForTokens(uint256 borrowedAmount) public payable {
+    function swapExactTokensForTokens(uint256 borrowedAmount) internal {
         console.log("swapExactTokensForTokens");
         uint256 balance = borrowedAmount;
         console.log("start token : %s", _paths[0][0]);
@@ -197,7 +186,7 @@ contract ArbContract is FlashLoanReceiverBase {
             if(keccak256(bytes(_exchanges[i])) == keccak256(bytes("uni"))) {
                 swapExactTokensForTokensUniswap(balance, 0, _paths[i], address(this));
             } else if(keccak256(bytes(_exchanges[i])) == keccak256(bytes("sushi"))) {
-                swapExactTokensForTokensSushi(balance, 0, _paths[i], address(this), block.timestamp + 600);
+                swapExactTokensForTokensSushi(balance, 0, _paths[i], address(this), block.timestamp + 60);
             } else if(keccak256(bytes(_exchanges[i])) == keccak256(bytes("uni_v3"))) {
                 swapTokensUniswapV3(balance, _paths[i], _fees[i]);
             } else {
@@ -216,7 +205,7 @@ contract ArbContract is FlashLoanReceiverBase {
         console.logInt(_gainLoss);
     }
 
-    function swapExactTokensForTokensSushi(uint amountIn, uint amountOutMin, address[] memory path, address to, uint deadline) public payable {
+    function swapExactTokensForTokensSushi(uint amountIn, uint amountOutMin, address[] memory path, address to, uint deadline) internal {
         console.log("swapTokensForExactTokensSushi");
         //IERC20(path[0]).approve(COOL_WETH_PAIR_SUSHI, amountIn);
         console.log(amountIn);
@@ -230,7 +219,7 @@ contract ArbContract is FlashLoanReceiverBase {
         //console.log("allowance for COOL_WETH_PAIR: %s", IERC20(path[0]).allowance(address(this), COOL_WETH_PAIR_SUSHI));
         //console.log("amountIn: %s", amountIn);
         //(bool success, bytes memory data) = SUSHIV2_ROUTER.call(abi.encodeWithSignature("swapExactTokensForTokens(uint256,uint256,address[],address,uint256)", amountIn, amountOutMin, path, address(this), deadline));
-        IUniswapV2Router02(SUSHIV2_ROUTER).swapExactTokensForTokens(amountIn, amountOutMin, path, address(this), block.timestamp + 600);
+        IUniswapV2Router02(SUSHIV2_ROUTER).swapExactTokensForTokens(amountIn, amountOutMin, path, address(this), block.timestamp + 60);
         //console.log("swapExactTokensForTokens success: %s, data: %s", success, string(data));
         uint256 balanceOut = uint256(IERC20(path[pathLen - 1]).balanceOf(address(this)));
         console.log("balance out: %s", balanceOut);
@@ -292,7 +281,7 @@ contract ArbContract is FlashLoanReceiverBase {
 
     function swapTokensForWeth(uint256 amountIn, address[] memory path) internal {
         TransferHelper.safeApprove(path[0], UNISWAP_V2_ROUTER, amountIn);
-        IUniswapV2Router02(UNISWAP_V2_ROUTER).swapExactTokensForTokens(amountIn, 0, path, address(this), block.timestamp + 600);
+        IUniswapV2Router02(UNISWAP_V2_ROUTER).swapExactTokensForTokens(amountIn, 0, path, address(this), block.timestamp + 60);
     }
 
     function swapTokensBalancer(uint256 amountIn, address[] memory path, bytes32[] memory poolIds) internal {
