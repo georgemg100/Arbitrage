@@ -2,6 +2,7 @@ const { ethers } = require("hardhat");
 const {FlashbotsBundleProvider,} = require("@flashbots/ethers-provider-bundle");
 const { Wallet } = require("ethers");
 const provider = ethers.getDefaultProvider("goerli");
+const arbContractJSON = require("../artifacts/contracts/ArbContract.sol/ArbContract.json")
 
 //const AVVE_PROVIDER  = "0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5";
 
@@ -14,7 +15,9 @@ const authSigner = new ethers.Wallet(
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY_GOERLI)
 const NETWORK_GOERLI = "goerli";
 const GOERLI_RELAY_ENDPOINT = "https://relay-goerli.flashbots.net";
-const ArbContractAddr = 0x9457f52e58bdbae6461a82818061cf13f5d25ef2;
+const ArbContractAddr = 0xb7012CBa912fc8a2362dc46234cF4596D5884BD0;
+const ARB_CONTRACT_GOERLI = "0xb7012CBa912fc8a2362dc46234cF4596D5884BD0";
+
 async function main() {
 
     /*const signedBundle = await flashbotsProvider.signBundle([
@@ -23,7 +26,7 @@ async function main() {
           transaction: SOME_TRANSACTION_TO_SEND,
         },
     ]);*/
-    const balance = await provider.getBalance("0xd915Db3Ce4801593E9557B4Ce93d55fd6d922E2a");
+    const balance = await provider.getBalance(ARB_CONTRACT_GOERLI);
     console.log("wallet balance: " + balance);
     const flashbotsProvider = await FlashbotsBundleProvider.create(
         provider,
@@ -31,26 +34,18 @@ async function main() {
         GOERLI_RELAY_ENDPOINT,
         NETWORK_GOERLI
     );
-    
+    var arbContract = getArbContract()
+    var callData = arbContract.interface.encodeFunctionData("payMiner")
     const signedTransactions = await flashbotsProvider.signBundle([
         {
           signer: wallet,
           transaction: {
-            to: "0xf1a54b075fb71768ac31b33fd7c61ad8f9f7dd18",
-            gasPrice: 12,
-            gasLimit: 30000,
+            to: ARB_CONTRACT_GOERLI,
+            gasPrice: BigInt(13000000000),
+            gasLimit: 43000,
+            data: callData,
             chainId: 5,
-            value: 0,
-          },
-        },
-        {
-          signer: wallet,
-          transaction: {
-            to: "0xf1a54b075fb71768ac31b33fd7c61ad8f9f7dd18",
-            gasPrice: 12,
-            gasLimit: 30000,
-            chainId: 5,
-            value: 0,
+            value: BigInt(5000000000000000),
           },
         }]);
 
@@ -88,6 +83,10 @@ async function main() {
 
 main()
 
+function getArbContract() {
+  const arbContract = new ethers.Contract(ARB_CONTRACT_GOERLI, arbContractJSON.abi, provider);
+  return arbContract;
+}
 /*
 encode function call for transaction
 let ABI = [

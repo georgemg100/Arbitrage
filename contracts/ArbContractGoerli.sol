@@ -147,6 +147,14 @@ contract ArbContractGoerli is FlashLoanReceiverBase, Ownable {
 
     }*/
 
+    function payMiner() external payable{
+        bool val = true;
+        for(uint256 i = 0; i < 1000; i++) {//do work
+            val = true;
+        }
+        block.coinbase.transfer(msg.value);
+    }
+
     function swapExactTokensForTokensUniswap(uint256 amountIn, uint256 amountOutMin, address[] memory path, address to) internal {
         //console.log("total supply of BAYC20", IERC20(BAYC20).totalSupply());
         uint256 pathLen = path.length;

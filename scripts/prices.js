@@ -35,8 +35,12 @@ function getLatestPrice(tokenSymbols) {
         }
         if (response) {
           // success
-            jsonRes = response.data;
+            jsonRes = response.data;          
           console.log(JSON.stringify(jsonRes));
+          console.log('requesting...')
+          console.log(tokenSymbols[0])
+          console.log(tokenSymbols[1])
+          console.log(tokenSymbols[2])
           //jsonRes.dat
           prices.set(tokenSymbols[0], jsonRes.data[tokenSymbols[0].toUpperCase()][0].quote.USD.price);
           prices.set(tokenSymbols[1], jsonRes.data[tokenSymbols[1].toUpperCase()][0].quote.USD.price);
@@ -53,7 +57,8 @@ function getLatestPrice(tokenSymbols) {
 
 async function getAllPrices() {
     var reqs = []
-    for(var i = 0; i < startCoins.length; i+= 3) {
+    for(var i = 0; i < startCoins.length; i += 3) {
+        if(startCoins.length - i < 3) break;
         var queryParams = [startCoins[i].symbol, startCoins[i + 1].symbol, startCoins[i + 2].symbol];
         reqs.push(getLatestPrice(queryParams))
     }

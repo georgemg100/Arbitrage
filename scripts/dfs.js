@@ -1,7 +1,6 @@
 const common = require("./common.js");
 const startCoins = require("../files/start_coins.json");
-var tradesCycles = Array();
-const maxHops = 4;
+var maxHops = 3;
 const minHops = 1;
 const WETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
 const DAI = "0x6b175474e89094c44da98b954eedeac495271d0f";
@@ -76,8 +75,9 @@ function findArbCyclesInterchangableStableCoins(list, visited, tokenAddr, res, h
     }
 }
 
-function findArbs(tokenMap) {
-
+function findArbs(tokenMap, maxHops) {
+    var tradesCycles = Array();
+    maxHops = maxHops
     startCoins.forEach((coin) => {
       var visited = new Set();
       var list = Array();
