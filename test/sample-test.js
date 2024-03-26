@@ -7,7 +7,8 @@ const ARB_CONTRACT_NAME = "ArbContract";
   //run fork of mainnet and find profitable trade
   //copy json of trade cycle from the logs
   //use it to innit tradecycle in test 
-const testTradeCycle = require("./tradecycle.json")
+const uniV3PoolABI = require("./univ3poolabi.json")
+const testTrade = require("./testTrade.json")
 const common = require("../scripts/common.js");
 
 /*describe("Greeter", function() {
@@ -36,7 +37,8 @@ describe("ArbContract", function() {
     const ArbContract = await ethers.getContractFactory(ARB_CONTRACT_NAME);
     const arbContract = await ArbContract.deploy(AAVE_PROVIDER);
     await arbContract.deployed()
-    testTradeCycle.startToken = '0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9';
+    const testTradeCycle = testTrade.tradeCycle
+    testTradeCycle.startToken = '0x6b175474e89094c44da98b954eedeac495271d0f';
     testTradeCycle[0].reserve0 = BigInt(testTradeCycle[0].reserve0)
     testTradeCycle[0].reserve1 = BigInt(testTradeCycle[0].reserve1)
     testTradeCycle[1].reserve0 = BigInt(testTradeCycle[1].reserve0)
@@ -48,17 +50,24 @@ describe("ArbContract", function() {
     console.log('EaEb', EaEb)
     const optimalInput = common.getOptimalInput5(EaEb, 0, 0);
     console.log('optimalInput', optimalInput)
+    const aprime = common.getAprime6(testTradeCycle, optimalInput);
+    console.log('balance after swap (aprime)', aprime)
     const optimalProfit = common.getOptimalProfit8(testTradeCycle, optimalInput);
     console.log('optimalProfit', optimalProfit)
+    const PERCENT_TO_COINBASE = 5650;
+
+    //execute trades on each pool to see if the math matches calculation
     //copied from tests.js
-    // const tx = await arbContract.callLendingPool(
-    //     [tradeCycleResultsZero.path[0]],
-    //     [BigInt(Math.floor(optimalInput))],
-    //     [0],
-    //     '0x10',
-    //     '0',
-    //     tradeCycleResultsZero.path
-    //   );
+    await arbContract.callLendingPool(
+      [testTrade.path[0]],
+      [optimalInput],
+      testTrade.exchangeToTradePath,
+      common.getAllPaths(testTrade.exchangeToTradePath),
+      common.getAllExchanges(testTrade.exchangeToTradePath),
+      common.getAllFees(testTrade.exchangeToFeesPath),
+      common.getAllPools(testTrade.exchangeToPoolsPath),
+      PERCENT_TO_COINBASE
+      );
     //execute trade against contract
     //compare actual profit against calculated profit
   })

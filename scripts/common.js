@@ -818,3 +818,4 @@ module.exports.getOptimalInput5 = getOptimalInput5;
 module.exports.getOptimalProfit8 = getOptimalProfit8;
 module.exports.getAllPools = getAllPools;
 module.exports.getEthPriceUSD = getEthPriceUSD;
+module.exports.getAprime6 = getAprime6;
