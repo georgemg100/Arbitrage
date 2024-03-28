@@ -97,7 +97,8 @@ contract ArbContract is FlashLoanReceiverBase, Ownable {
             swapExactTokensForTokens(amounts[i]);
             //buyNFT20SellNFTX(amounts[i], assets[i]);
             IERC20(assets[i]).approve(address(LENDING_POOL), amountToReturn);
-            console.log("balance after swap: %s", IERC20(assets[i]).balanceOf(address(this)) - amountToReturn);
+            console.log("balance after swap: %s", IERC20(assets[i]).balanceOf(address(this)));
+            console.log("balance after returning lent amount: %s", IERC20(assets[i]).balanceOf(address(this)) - amountToReturn);
             //console.log("coinbase: %s", block.coinbase);     
             uint256 toCoinbase = 0;
             uint256 toKeep = 0;
@@ -174,7 +175,7 @@ contract ArbContract is FlashLoanReceiverBase, Ownable {
         IUniswapV2Router02(UNISWAP_V2_ROUTER).swapExactTokensForTokens(amountIn, amountOutMin, path, address(this), block.timestamp + 60);
         //UNISWAP_V2_ROUTER.call(abi.encodeWithSignature("swapExactTokensForTokens(uint256,uint256,address[],address,uint256)", amountIn, amountOutMin, path, address(this), block.timestamp + 600));
         uint256 balanceOut = uint256(IERC20(path[pathLen - 1]).balanceOf(address(this)));
-        //console.log("balance out: %s", balanceOut);
+        console.log("balance out uniswapv2: %s", balanceOut);
     }
 
     function swapExactTokensForTokens(uint256 borrowedAmount) internal {
@@ -243,27 +244,6 @@ contract ArbContract is FlashLoanReceiverBase, Ownable {
             output = abi.encodePacked(output, uint24(fees[i]));
         }
         output = abi.encodePacked(output, path[path.length - 1]);
-        //console.log(path[path.length - 1]);
-        //bytes memory firstPool = output.getFirstPool();
-        //(address token1, address token2, uint24 fee) = output.decodeFirstPool();
-        //bytes memory secondPool = firstPool.getFirstPool();
-        //output = output.skipToken();//.skipToken();
-        //(address token3, address token4, uint24 fee2) = output.decodeFirstPool();
-        // console.log("decoded token1: %s", token1);
-        // console.log("decoded token2: %s", token2);
-        // console.log("decoded fee: %s", fee);
-        // console.log("decoded token3: %s", token3);
-        // console.log("decoded token4: %s", token4);
-        // console.log("decoded fee2: %s", fee2);
-        //console.log(output);
-        /*console.log("path[0]: %s", path[0]);
-        console.log("fees[0]: %s", fees[0]);
-        output = abi.encodePacked(path[0]);
-        console.log("encodePacked Called");
-        address addr1 = abi.decode(output, (address));*/
-        //console.log("decoded values:");
-        //console.log(addr1);
-        //console.log(fee1);
         ISwapRouter.ExactInputParams memory params = 
         ISwapRouter.ExactInputParams({
                 path: output,
@@ -274,7 +254,7 @@ contract ArbContract is FlashLoanReceiverBase, Ownable {
             });
         ISwapRouter(SWAP_ROUTER_UNI_V3).exactInput(params);
         uint256 balanceOut = uint256(IERC20(path[pathLen - 1]).balanceOf(address(this)));
-        console.log("balance out: %s", balanceOut);
+        console.log("balance out uniswap v3: %s", balanceOut);
     }
 
     function swapTokensForWeth(uint256 amountIn, address[] memory path) internal {

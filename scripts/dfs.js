@@ -1,6 +1,6 @@
 const common = require("./common.js");
 const startCoins = require("../files/start_coins.json");
-var maxHops = 3;
+var maxHops = 4;
 const minHops = 1;
 const WETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
 const DAI = "0x6b175474e89094c44da98b954eedeac495271d0f";

@@ -1,0 +1,158 @@
+{
+	"optimalInput": "90595408587812792n",
+	"decimalInput": 18,
+	"optimalProfit": "30930142244850246n",
+	"optimalProfitUSD": 111.71623262785174,
+	"tradeCycle": [
+		{
+			"index": 23,
+			"exchange": "uni",
+			"address": "0xbb2b8038a1640196fbe3e38816f3e67cba72d940",
+			"token0": {
+				"address": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+				"symbol": "WBTC",
+				"decimal": 8
+			},
+				"token1": {
+				"address": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+				"symbol": "WETH",
+				"decimal": 18
+			},
+			"reserve0": "10117797829",
+			"reserve1": "1979747952145756465490",
+			"fee": 3000,
+			"feeNumerator": 997000,
+			"feeDenominator": 1000000
+		},
+		{
+			"index": 37,
+			"exchange": "uni_v3",
+			"address": "0x99ac8ca7087fa4a2a1fb6357269965a2014abc35",
+			"token0": {
+				"address": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+				"symbol": "WBTC",
+				"decimal": 8
+			},
+			"token1": {
+				"address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+				"symbol": "USDC",
+				"decimal": 6
+			},
+			"reserve0": "21580284687",
+			"reserve1": "15227431730207",
+			"fee": 3000,
+			"feeNumerator": 997000,
+			"feeDenominator": 1000000
+		},
+		{
+			"index": 6,
+			"exchange": "uni_v3",
+			"address": "0xdf50fbde8180c8785842c8e316ebe06f542d3443",
+			"token0": {
+				"address": "0x956f47f50a910163d8bf957cf5846d573e7f87ca",
+				"symbol": "FEI",
+				"decimal": 18
+			},
+			"token1": {
+				"address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+				"symbol": "USDC",
+				"decimal": 6
+			},
+			"reserve0": "8724077053693911214069671",
+			"reserve1": "8719752231213",
+			"fee": 100,
+			"feeNumerator": 999900,
+			"feeDenominator": 1000000
+		},
+		{
+			"index": 9,
+			"exchange": "uni_v3",
+			"address": "0x2028d7ef0223c45cadbf05e13f1823c1228012bf",
+			"token0": {
+				"address": "0x956f47f50a910163d8bf957cf5846d573e7f87ca",
+				"symbol": "FEI",
+				"decimal": 18
+			},
+			"token1": {
+				"address": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+				"symbol": "WETH",
+				"decimal": 18
+			},
+			"reserve0": "3392538366675578886271",
+			"reserve1": "1394526543603457517",
+			"fee": 3000,
+			"feeNumerator": 997000,
+			"feeDenominator": 1000000
+		}
+	],
+	"path": [
+		"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+		"0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+		"0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+		"0x956f47f50a910163d8bf957cf5846d573e7f87ca",
+		"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+	],
+	"exchangePath": [
+		"uni",
+		"uni_v3",
+		"uni_v3",
+		"uni_v3"
+	],
+	"exchangeToTradePath": [
+		{
+			"exchange": "uni",
+			"_path": [
+				"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+				"0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+			]
+		},
+		{
+			"exchange": "uni_v3",
+			"_path": [
+				"0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+				"0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+				"0x956f47f50a910163d8bf957cf5846d573e7f87ca",
+				"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+			]
+		}
+	],
+	"exchangeToFeesPath": [
+		{
+			"exchange": "uni",
+			"fees": [
+				"3000"
+			]
+		},
+		{
+			"exchange": "uni_v3",
+			"fees": [
+				"3000",
+				"100",
+				"3000"
+			]
+		}
+	],
+	"exchangeToPoolsPath": [
+		{
+			"exchange": "uni",
+			"poolAddresses": [
+				"0xbb2b8038a1640196fbe3e38816f3e67cba72d940"
+			]
+		},
+		{
+			"exchange": "uni_v3",
+			"poolAddresses": [
+				"0x99ac8ca7087fa4a2a1fb6357269965a2014abc35",
+				"0xdf50fbde8180c8785842c8e316ebe06f542d3443",
+				"0x2028d7ef0223c45cadbf05e13f1823c1228012bf"
+			]
+		}
+	],
+	"ea": "423531695082753970n",
+	"eb": "624303475867540775n",
+	"EaEb": [
+		"423531695082753970n",
+		"624303475867540775n",
+		"0x956f47f50a910163d8bf957cf5846d573e7f87ca"
+	]
+}
