@@ -36,56 +36,71 @@ describe("Greeter", function() {
 describe("ArbContract", function() {
   let arbContract;
   before(async function () {
-    const ArbContract = await ethers.getContractFactory(ARB_CONTRACT_NAME);
-    arbContract = await ArbContract.deploy(AAVE_PROVIDER);
-    await arbContract.deployed()
+    // const ArbContract = await ethers.getContractFactory(ARB_CONTRACT_NAME);
+    // arbContract = await ArbContract.deploy(AAVE_PROVIDER);
+    // await arbContract.deployed()
   })
-  it("should do arb trade on fork of mainnet", async function() {
-    //use block number: 19493256
-    const testTradeCycle = testTrade.tradeCycle
-    testTradeCycle.startToken = '0x6b175474e89094c44da98b954eedeac495271d0f';
-    testTradeCycle[0].reserve0 = BigInt(testTradeCycle[0].reserve0)
-    testTradeCycle[0].reserve1 = BigInt(testTradeCycle[0].reserve1)
-    testTradeCycle[1].reserve0 = BigInt(testTradeCycle[1].reserve0)
-    testTradeCycle[1].reserve1 = BigInt(testTradeCycle[1].reserve1)
-    testTradeCycle[2].reserve0 = BigInt(testTradeCycle[2].reserve0)
-    testTradeCycle[2].reserve1 = BigInt(testTradeCycle[2].reserve1)
-    //calculate optimal profit from trade cycle
-    const EaEb = common.getEaEb8(testTradeCycle)
-    console.log('EaEb', EaEb)
-    const optimalInput = common.getOptimalInput5(EaEb, 0, 0);
-    console.log('optimalInput', optimalInput)
-    const aprime = common.getAprime6(testTradeCycle, optimalInput);
-    console.log('balance after swap (aprime)', aprime)
-    const optimalProfit = common.getOptimalProfit8(testTradeCycle, optimalInput);
-    console.log('optimalProfit', optimalProfit)
-    const PERCENT_TO_COINBASE = 5650;
+  // it("should do arb trade on fork of mainnet", async function() {
+  //   //use block number: 19493256
+  //   const testTradeCycle = testTrade.tradeCycle
+  //   testTradeCycle.startToken = '0x6b175474e89094c44da98b954eedeac495271d0f';
+  //   testTradeCycle[0].reserve0 = BigInt(testTradeCycle[0].reserve0)
+  //   testTradeCycle[0].reserve1 = BigInt(testTradeCycle[0].reserve1)
+  //   testTradeCycle[1].reserve0 = BigInt(testTradeCycle[1].reserve0)
+  //   testTradeCycle[1].reserve1 = BigInt(testTradeCycle[1].reserve1)
+  //   testTradeCycle[2].reserve0 = BigInt(testTradeCycle[2].reserve0)
+  //   testTradeCycle[2].reserve1 = BigInt(testTradeCycle[2].reserve1)
+  //   //calculate optimal profit from trade cycle
+  //   const EaEb = common.getEaEb8(testTradeCycle)
+  //   console.log('EaEb', EaEb)
+  //   const optimalInput = common.getOptimalInput5(EaEb, 0, 0);
+  //   console.log('optimalInput', optimalInput)
+  //   const aprime = common.getAprime6(testTradeCycle, optimalInput);
+  //   console.log('balance after swap (aprime)', aprime)
+  //   const optimalProfit = common.getOptimalProfit8(testTradeCycle, optimalInput);
+  //   console.log('optimalProfit', optimalProfit)
+  //   const PERCENT_TO_COINBASE = 5650;
 
-    //execute trades on each pool to see if the math matches calculation
-    //copied from tests.js
-    await arbContract.callLendingPool(
-      [testTrade.path[0]],
-      [optimalInput],
-      testTrade.exchangeToTradePath,
-      common.getAllPaths(testTrade.exchangeToTradePath),
-      common.getAllExchanges(testTrade.exchangeToTradePath),
-      common.getAllFees(testTrade.exchangeToFeesPath),
-      common.getAllPools(testTrade.exchangeToPoolsPath),
-      PERCENT_TO_COINBASE
-      );
-    //execute trade against contract
-    //compare actual profit against calculated profit
-  })
+  //   //execute trades on each pool to see if the math matches calculation
+  //   //copied from tests.js
+  //   await arbContract.callLendingPool(
+  //     [testTrade.path[0]],
+  //     [optimalInput],
+  //     testTrade.exchangeToTradePath,
+  //     common.getAllPaths(testTrade.exchangeToTradePath),
+  //     common.getAllExchanges(testTrade.exchangeToTradePath),
+  //     common.getAllFees(testTrade.exchangeToFeesPath),
+  //     common.getAllPools(testTrade.exchangeToPoolsPath),
+  //     PERCENT_TO_COINBASE
+  //     );
+  //   //execute trade against contract
+  //   //compare actual profit against calculated profit
+  // })
   it("should do arb trade on fork of mainnet", async function() {
     //use block number: 19526011
+    const ArbContract = await ethers.getContractFactory(ARB_CONTRACT_NAME);
+    // Manually specify the gas fee parameters
+    const options = {
+      maxFeePerGas: ethers.utils.parseUnits('500', 'gwei'), // Example values; adjust based on current conditions
+      maxPriorityFeePerGas: ethers.utils.parseUnits('2', 'gwei'),
+  };
+    arbContract = await ArbContract.deploy(AAVE_PROVIDER, options);
+    await arbContract.deployed()
+    console.log("Contract deployed to:", arbContract.address);
+
     const testTradeCycle = testTrade2.tradeCycle
     testTradeCycle.startToken = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
+
+    await common.updateReserves4Async([testTradeCycle], arbContract)
+
     testTradeCycle[0].reserve0 = BigInt(testTradeCycle[0].reserve0)
     testTradeCycle[0].reserve1 = BigInt(testTradeCycle[0].reserve1)
     testTradeCycle[1].reserve0 = BigInt(testTradeCycle[1].reserve0)
     testTradeCycle[1].reserve1 = BigInt(testTradeCycle[1].reserve1)
     testTradeCycle[2].reserve0 = BigInt(testTradeCycle[2].reserve0)
     testTradeCycle[2].reserve1 = BigInt(testTradeCycle[2].reserve1)
+    testTradeCycle[3].reserve0 = BigInt(testTradeCycle[3].reserve0)
+    testTradeCycle[3].reserve1 = BigInt(testTradeCycle[3].reserve1)
     //calculate optimal profit from trade cycle
     const EaEb = common.getEaEb8(testTradeCycle)
     console.log('EaEb', EaEb)
@@ -107,7 +122,10 @@ describe("ArbContract", function() {
       common.getAllExchanges(testTrade2.exchangeToTradePath),
       common.getAllFees(testTrade2.exchangeToFeesPath),
       common.getAllPools(testTrade2.exchangeToPoolsPath),
-      PERCENT_TO_COINBASE
+      PERCENT_TO_COINBASE,
+      {
+        gasLimit: 30000000
+      }
       );
     //execute trade against contract
     //compare actual profit against calculated profit

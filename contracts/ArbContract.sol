@@ -168,6 +168,8 @@ contract ArbContract is FlashLoanReceiverBase, Ownable {
         //console.log("total supply of BAYC20", IERC20(BAYC20).totalSupply());
         uint256 pathLen = path.length;
         uint256 balanceIn = uint256(IERC20(path[0]).balanceOf(address(this)));
+
+        console.log("amount In: %s", amountIn);
         //console.log("balance in: %s", balanceIn);
         //IERC20(path[0]).approve(UNISWAP_V2_ROUTER, amountIn);
         TransferHelper.safeApprove(path[0], UNISWAP_V2_ROUTER, amountIn);
@@ -240,6 +242,7 @@ contract ArbContract is FlashLoanReceiverBase, Ownable {
         for(uint256 i = 0; i < fees.length; i++) {
             //console.log(path[i]);
             //console.log(fees[i]);
+            console.log("univ3 path: %s", path[i]);
             output = abi.encodePacked(output, path[i]);
             output = abi.encodePacked(output, uint24(fees[i]));
         }
